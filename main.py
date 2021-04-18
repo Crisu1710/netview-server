@@ -130,7 +130,7 @@ def update(data, path):
         store = store.replace("[", "[\n")
         store = store.replace("},", "},\n")
         store = store.replace(" ", "")
-        store = store.replace("]", "\n]")
+        store = store.replace("]", "\n\n]")
         file.write(store)
 
 
