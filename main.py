@@ -5,6 +5,8 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from json import dumps
+import requests
+import shutil
 # import os
 
 port = 8090  # int(os.environ["VUE_APP_API_PORT"])
@@ -19,7 +21,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE")
         self.send_header("Access-Control-Allow-Headers", "x-api-key,Content-Type")
-        self.send_header("Content-Type", "application/json")
+        #self.send_header("Content-Type", "application/json")
 
     def send_dict_response(self, d):
         """ Sends a dictionary (JSON) back to the client """
@@ -36,13 +38,21 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         path = self.path.split('/')
-        filename = "conf/" + path[1] + ".json"
+        if path[1] == "upload":
+            self.send_header("Content-type", "image/jpg")
+            print("download ...")
+            filename = "img/" + "Spotify" + ".png"
+            f = open(filename, 'rb')
+            self.wfile.write(f.read())
+            f.close()
+        else:
+            filename = "conf/" + path[1] + ".json"
 
-        with open(filename) as file:
-            file = json.load(file)
-        response = file
+            with open(filename) as file:
+                file = json.load(file)
+            response = file
 
-        self.send_dict_response(response)
+            self.send_dict_response(response)
 
     def do_PUT(self):
         self.send_response(200)
@@ -88,21 +98,32 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 
 def create(data, path):
-    path = path.split('/')
-    filename = "conf/" + path[1] + ".json"
-
-    file = open(filename, 'r')
-    ln = len(open(filename, 'r').readlines())
-    original_text = file.read()
-    original_text = original_text.replace('[', '')
-    file.close()
-    file = open(filename, "wb")
-    if ln == 3:
-        file.write("[ \n".encode() + data + original_text.encode())
+    if path == "/upload":
+        download(data)
     else:
-        file.write("[ \n".encode() + data + ",".encode() + original_text.encode())
-    file.close()
+        path = path.split('/')
+        filename = "conf/" + path[1] + ".json"
 
+        file = open(filename, 'r')
+        ln = len(open(filename, 'r').readlines())
+        original_text = file.read()
+        original_text = original_text.replace('[', '')
+        file.close()
+        file = open(filename, "wb")
+        if ln == 3:
+            file.write("[ \n".encode() + data + original_text.encode())
+        else:
+            file.write("[ \n".encode() + data + ",".encode() + original_text.encode())
+        file.close()
+
+def download(data):
+    info = data.decode()
+    var = json.loads(info)
+    r = requests.get(var["icon_url"], stream=True, headers={'User-agent': 'Mozilla/5.0'})
+    if r.status_code == 200:
+        with open("img/"+var["name"]+".png", 'wb') as f:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, f)
 
 def update(data, path):
     store = []
