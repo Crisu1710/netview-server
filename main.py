@@ -40,11 +40,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         path = self.path.split('/')
         if path[1] == "upload":
             self.send_header("Content-type", "image/jpg")
-            print("download ...")
-            filename = "img/" + "Spotify" + ".png"
-            f = open(filename, 'rb')
-            self.wfile.write(f.read())
-            f.close()
+            print(path)
+            if path[2] == "":
+                print("path is null, skipping")
+            else:
+                filename = "img/" + path[2] + ".png"
+                f = open(filename, 'rb')
+                self.wfile.write(f.read())
+                f.close()
         else:
             filename = "conf/" + path[1] + ".json"
 
@@ -124,6 +127,10 @@ def download(data):
         with open("img/"+var["name"]+".png", 'wb') as f:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
+    new_data = '{"name":"'+var["name"]+'","img":"'+var["name"]+'","id":'+str(var["id"])+'}'
+    #new_data = '{"name":"Prometheus","icon_url":"https://luktom.net/wordpress/wp-content/uploads/2019/05/prometheus.png","id":1643837362308}'
+    new_data = new_data.encode()
+    create(new_data, "/template")
 
 def update(data, path):
     store = []
